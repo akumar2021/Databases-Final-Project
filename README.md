@@ -138,12 +138,12 @@ Constellation
     Star
         Classification
 
-Constellation - Ngc_M : One to Many
-Constellation - Star  : One to Many
-Ngc_M - NGC           : One to One
-Ngc_M - Messier       : One to One
-NGC - Supernova       : One to Many
-Star - Classification : Many to Many
+1. Constellation - Ngc_M : One to Many
+2. Constellation - Star  : One to Many
+3. Ngc_M - NGC           : One to One
+4. Ngc_M - Messier       : One to One
+5. NGC - Supernova       : One to Many
+6. Star - Classification : Many to Many
 
 ## NORMALIZATION
 
