@@ -143,13 +143,17 @@ Constellation
         Classification
 
 1. Constellation - Ngc_M : One to Many
-2. Constellation - Star  : One to Many
-3. Ngc_M - NGC           : One to One
-4. Ngc_M - Messier       : One to One
-5. NGC - Supernova       : One to Many
+2. Constellation - Star      : One to Many
+3. Ngc_M - NGC              : One to One
+4. Ngc_M - Messier         : One to One
+5. NGC - Supernova        : One to Many
 6. Star - Classification : Many to Many
 
 ## NORMALIZATION
 
 Ngc_M normalizes relations between NGC, Messier, and Constellation.
 HIP id, HR id, HD id, GL id, and BF id were not normalized to increase database query speed.
+
+## INDEXES
+
+MongoDB automatically indexes tables on the _id column for every collection.
