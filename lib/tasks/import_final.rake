@@ -16,6 +16,14 @@ def splitClasses (spect)
   return arr
 end
 
+def getClassIds(classes)
+  output = []
+  for i in 0..arr.count()
+    output << Classification.find_by({name: splitClasses(classes)[i]})._id
+  end
+  return output
+end
+
 def extractNGC(ngc)
   ngc.sub!("NGC", "")
   while ngc.include?(" ")
@@ -35,41 +43,40 @@ task :final => [:environment] do
   CSV.foreach(file, :headers => true) do |row|
     Constellation.find_or_create_by ({
       name: row[0],
-      abbreviation: row[1],
+      abbreviation: row[1].upcase,
       origin: row[2],
       meaning: row[3]
     })
     print "."
   end
   puts
-=begin
+
   print"Importing NgcM Relationships..."
   
-  file = "data/Relationships.csv"
-
+  file = "data/NgcMs.csv"
+  
   CSV.foreach(file, :headers => true) do |row|
+    puts row[1]
     NgcM.find_or_create_by({
       ngc_id: row[1],
       messier_id: row[2],
       constellation_id: Constellation.find_by({abbreviation: row[3]})._id
     })
-    print"."
   end
   puts
-=end
+
   print"Importing NGC..."
   
   file = "data/NGCs.csv"
 
   CSV.foreach(file, :headers => true) do |row|
-    puts extractNGC(row[0])
     Ngc.find_or_create_by({
       _id: extractNGC(row[0]),
       name: "NGC " + extractNGC(row[0]),
       alternate_names: row[1],
       type: row[2],
-      #NgcM_id: NgcM.find_by({ngc_id: row[0]})._id,
-      #con: Constellation.find_by({_id: NgcM.find_by({ngc_id: row[0]}).constellation_id}).name,
+      NgcM_id: NgcM.find_by({ngc_id: row[0]})._id,
+      constellation_id: Constellation.find_by({_id: NgcM.find_by({ngc_id: row[0].upcase}).constellation_id}).name,
       con: row[3],
       ra: row[4],
       d: row[5],
@@ -94,9 +101,9 @@ task :final => [:environment] do
     Messier.find_or_create_by({
       _id: row[0],
       name: "M"+row[0],
-      #NgcM_id: NgcM.find_by({messier_id: row[0].to_i})._id,
+      NgcM_id: NgcM.find_by({messier_id: row[0].to_i})._id,
       ngc_name: "NGC"+row[1],
-      #con: Constellation.find_by({_id: NgcM.find_by({messier_id: row[0]}).constellation_id}).name,
+      con: Constellation.find_by({_id: NgcM.find_by({messier_id: row[0].upcase}).constellation_id}).name,
       ra: row[3],
       d: row[4],
       mag: row[5],
@@ -112,7 +119,6 @@ task :final => [:environment] do
   file = "data/Supernovae.csv"
 
   CSV.foreach(file, :headers => true) do |row|
-    puts row[0]
     Supernova.find_or_create_by({
       _id: row[0].sub("SN",""),
       name: row[0],
@@ -149,6 +155,7 @@ task :final => [:environment] do
       pmd: row[11],
       mag: row[12],
       absmag: row[13],
+      classification_id: Constellation.find_by({abbreviation: row[14]})._id,
       spect: splitClasses(row[14]),
       ci: row[15],
       x: row[16],
@@ -158,7 +165,7 @@ task :final => [:environment] do
       vy: row[20],
       vz: row[21],
       constellation_id: Constellation.find_by({abbreviation: row[22]})._id,
-      con: Constellation.find_by({abbreviation: row[22]}).name,
+      con: Constellation.find_by({abbreviation: row[22].upcase}).name,
       comp: row[23],
       comp_primary: row[24],
       lum: row[25],
@@ -170,10 +177,10 @@ task :final => [:environment] do
   end
   puts
   
-=begin
+
   print"Importing Classifications..."
 
-  file = "data/test/Classification.csv"
+  file = "data/Classifications.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Classification.find_or_create_by({
@@ -182,7 +189,7 @@ task :final => [:environment] do
     print "."
   end
   puts
-=end
+
 
   puts("Sucessfully imported all data!")
 end
