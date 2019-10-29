@@ -32,7 +32,11 @@ query.rake:
     2 functions: groupBy and collectThree
     To run do: "rake query"
 
-Note: Be sure to run "rake delete" before running "rake import" for a second time!
+NOTE: Be sure to run "rake delete" before running "rake import" for a second time!
+
+NOTE: import_test.rake is used for testing purposes:
+    Imports test data into tables while also creating relations using find_by statements
+    To run do: "rake import_test"
 
 ## DATA AND DOCUMENTS
 Data Types:

@@ -1,5 +1,7 @@
 require 'csv'
 
+require File.expand_path('../config/environment', "development.rb")
+
 def splitClasses (spect)
   while spect.include?(".")
     spect.sub!(".", "")
@@ -16,19 +18,36 @@ def splitClasses (spect)
   return arr
 end
 
+def getClassIds(classes)
+  output = []
+  for i in 0..arr.count()
+    output << Classification.find_by({name: splitClasses(classes)[i]})._id
+  end
+  return output
+end
+
+def extractNGC(ngc)
+  ngc.sub!("NGC", "")
+  while ngc.include?(" ")
+    ngc.sub!(" ", "")
+  end
+
+  return ngc
+end
+
 desc "Imports data from CSV files"
 task :import => [:environment] do
    
   print"Importing Constellations..."
 
-  file = "data/test/Constellations.csv"
+  file = "data/Constellations.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Constellation.find_or_create_by ({
-      name: row[1],
-      abbreviation: row[2],
-      origin: row[3],
-      meaning: row[4]
+      name: row[0],
+      abbreviation: row[1].upcase,
+      origin: row[2],
+      meaning: row[3]
     })
     print "."
   end
@@ -36,40 +55,49 @@ task :import => [:environment] do
 
   print"Importing NgcM Relationships..."
   
-  file = "data/test/Relationships.csv"
-
+  file = "data/NgcMs.csv"
+  
   CSV.foreach(file, :headers => true) do |row|
+    puts row[1]
     NgcM.find_or_create_by({
       ngc_id: row[1],
       messier_id: row[2],
       constellation_id: Constellation.find_by({abbreviation: row[3]})._id
     })
-    print"."
   end
   puts
 
   print"Importing NGC..."
   
-  file = "data/test/NGC.csv"
+  file = "data/NGCs.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Ngc.find_or_create_by({
-      _id: row[0],
-      name: row[1],
-      alternate_names: row[2],
-      type: row[3],
+      _id: extractNGC(row[0]),
+      name: "NGC " + extractNGC(row[0]),
+      alternate_names: row[1],
+      type: row[2],
       NgcM_id: NgcM.find_by({ngc_id: row[0]})._id,
-      con: Constellation.find_by({_id: NgcM.find_by({ngc_id: row[0]}).constellation_id}).name,
-      ra: row[6],
-      d: row[7]
+      constellation_id: Constellation.find_by({_id: NgcM.find_by({ngc_id: row[0].upcase}).constellation_id}).name,
+      con: row[3],
+      ra: row[4],
+      d: row[5],
+      mag: row[6],
+      subr: row[7],
+      size_max: row[8],
+      size_min: row[9],
+      type_class: row[10],
+      brstr: row[11],
+      bchm: row[12],
+      ngc_descr: row[13],
+      notes: row[14]
     })
-    print "."
   end
   puts
 
   print"Importing Messier..."
   
-  file = "data/test/Messier.csv"
+  file = "data/Messiers.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Messier.find_or_create_by({
@@ -77,7 +105,7 @@ task :import => [:environment] do
       name: "M"+row[0],
       NgcM_id: NgcM.find_by({messier_id: row[0].to_i})._id,
       ngc_name: "NGC"+row[1],
-      con: Constellation.find_by({_id: NgcM.find_by({messier_id: row[0]}).constellation_id}).name,
+      con: Constellation.find_by({_id: NgcM.find_by({messier_id: row[0].upcase}).constellation_id}).name,
       ra: row[3],
       d: row[4],
       mag: row[5],
@@ -90,23 +118,19 @@ task :import => [:environment] do
 
   print"Importing Supernova..."
 
-  file = "data/test/Supernova.csv"
+  file = "data/Supernovae.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Supernova.find_or_create_by({
-      _id: row[1].sub("SN",""),
-      name: row[1],
-      disc_date: row[2],
-      mmax: row[3],
-      ngc_id: Ngc.find_by({_id: row[4].sub("NGC ", "")})._id,
-      ngc_name: Ngc.find_by({_id: row[4].sub("NGC ", "")}).name,
-      ra: row[5],
-      d: row[6]#,
-      #type: row[6],
-      #photo: row[7],
-      #spec: row[8],
-      #radio: row[9],
-      #xray: row[10]
+      _id: row[0].sub("SN",""),
+      name: row[0],
+      disc_date: row[1],
+      mmax: row[2],
+      ngc_id: Ngc.find_by({name: row[3]})._id,
+      ngc_name: row[3],
+      ra: row[4],
+      d: row[5],
+      type: row[6]
     })
     print"."
   end
@@ -115,31 +139,50 @@ task :import => [:environment] do
 
   print"Importing Stars..."
 
-  file = "data/test/Stars.csv"
+  file = "data/Stars.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Star.find_or_create_by({
-      _id: row[1],
+      _id: row[0],
       hip: row[1],
-      proper: row[2],
-      ra: row[3],
-      d: row[4],
-      dist: row[5],
-      mag: row[6],
-      absmag: row[7],
-      spect: splitClasses(row[8]),
-      bayer: row[9],
-      constellation_id: Constellation.find_by({abbreviation: row[10]})._id,
-      con: Constellation.find_by({abbreviation: row[10]}).name,
+      hd: row[2],
+      hr: row[3],
+      gl: row[4],
+      bf: row[5],
+      proper: row[6],
+      ra: row[7],
+      d: row[8],
+      dist: row[9],
+      pmra: row[10],
+      pmd: row[11],
+      mag: row[12],
+      absmag: row[13],
+      classification_id: Constellation.find_by({abbreviation: row[14]})._id,
+      spect: splitClasses(row[14]),
+      ci: row[15],
+      x: row[16],
+      y: row[17],
+      z: row[18],
+      vx: row[19],
+      vy: row[20],
+      vz: row[21],
+      constellation_id: Constellation.find_by({abbreviation: row[22]})._id,
+      con: Constellation.find_by({abbreviation: row[22].upcase}).name,
+      comp: row[23],
+      comp_primary: row[24],
+      lum: row[25],
+      var: row[26],
+      var_min: row[27],
+      var_max: row[28]
     })
     print "."
   end
   puts
   
-=begin
+
   print"Importing Classifications..."
 
-  file = "data/test/Classification.csv"
+  file = "data/Classifications.csv"
 
   CSV.foreach(file, :headers => true) do |row|
     Classification.find_or_create_by({
@@ -148,7 +191,7 @@ task :import => [:environment] do
     print "."
   end
   puts
-=end
+
 
   puts("Sucessfully imported all data!")
 end
